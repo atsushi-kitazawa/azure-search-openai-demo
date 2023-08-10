@@ -32,8 +32,8 @@ ChatGPTの回答に「引用」をテキストに付加することで、より�
 
 本ワークショップで作成したAPIは、WebアプリだけでなくモバイルアプリケーションやPowerAppsなどのローコードアプリケーションからも利用できます。
 
-![](images/powerapps.png)
-参考: PowerAppsでの例
+<!-- ![](images/powerapps.png)
+参考: PowerAppsでの例 -->
 
 
 ## 🔧事前準備
@@ -59,8 +59,7 @@ ChatGPTの回答に「引用」をテキストに付加することで、より�
 
 
 #### このパートのゴール
-* Bicepを活用したコードによるAzure環境の構築や管理の流れを知る
-* Form RecognizerをつかってPDFからOCRができることを確認する
+* Azure Developer CLIを活用したAzure環境の構築や管理の流れを知る
 
 
 ## 💻ハンズオン
@@ -98,12 +97,11 @@ git clone https://github.com/<Your_GitHub_Name>/azure-search-openai-demo
 
 ![](images/vscode-devcontainer4.png)
 
-数分するとインストールが完了します。「`Done. Press any key to close the terminal.`」が表示されたら、任意のキーを押します。
+数分するとインストールが完了します。
 
 ![](images/vscode-devcontainer5.png)
 
-
-すると[`>< Dev Container: Python3`]となり、次のようなターミナル(コマンドを実行する箇所)が表示されます。これは、開発に必要な環境一式がDockerコンテナとして起動できるVisual Studio CodeのDevContainersという機能を使っています。もしエラー等で起動できない場合は、Visual Studio Codeを再起動しローカルPCでDockerコンテナが動作しているかを確認してください。
+すると[`>< Dev Container: Azure Developer CLI`]となり、次のようなターミナル(コマンドを実行する箇所)が表示されます。これは、開発に必要な環境一式がDockerコンテナとして起動できるVisual Studio CodeのDevContainersという機能を使っています。もしエラー等で起動できない場合は、Visual Studio Codeを再起動しローカルPCでDockerコンテナが動作しているかを確認してください。
 
 ![](images/vscode-devcontainer3.png)
 
@@ -121,49 +119,128 @@ Visual Studio CodeのRemote-Containers 拡張機能を使用すると、開発�
 
 
 ### 2. Azure環境の作成
-本ワークショップで使用するAzureの環境を構築します。Visual Studio Codeを起動し、ターミナルを開きます。
+本ワークショップではAzureの環境作成とサンプルアプリのデプロイにAzure Developer CLIを利用します。
+
+Azure Developer CLI(azdコマンド)は、Azureのリソースを管理するためのオープンソースのコマンドラインツールです。Azure Developer CLIを使用することで、Azure上のリソースの作成、更新、削除などを行うことができます。またAzure Developer CLIは、Azureのリソースを管理するためのスクリプトを作成する際にも役立ちます。Azure Developer CLIを使用することで、Azure上のリソースをプログラムから操作することができ、IaCによる自動デプロイや管理ができます。また、テンプレートが用意されているのでこれをもとに環境を素早く作成できます。このテンプレートは自作することも可能で、プロジェクトの要件にあわせたものを作成して開発チームで展開することができます。
+
+
 
 ![](images/infra1.png)
 
-ターミナルに次のコマンドを入力してAzureにログインします。そしてAzure OpenAI Serviceが利用可能なAzureサブスクリプションを設定します。
+ターミナルに次のコマンドを入力してAzureにログインします。そしてAzure OpenAIが利用可能なAzureサブスクリプションを設定します。
 
 例えば、サブスクリプションIDが「`aaaaaaaa-bbbb-cccc-dddddddddddd`」の場合、次のコマンドを実行します。
 
 ```bash
-az login
-az account set --subscription aaaaaaaa-bbbb-cccc-dddddddddddd
+azd auth login
+
+azd config set defaults.subscription aaaaaaaa-bbbb-cccc-dddddddddddd
 ```
 
-!>必ずAzure OpenAI Serviceが利用可能なサブスクリプションを指定してください。
+!>必ずAzure OpenAIが利用可能なサブスクリプションを指定してください。
 
-次に、Azure AD のオブジェクトIDを確認します。このオブジェクトIDは次の手順で利用しますので値をひかえてください。
+本ワークショップで使用するAzure環境はAzure Developer CLIで構築します。Visual Studio Codeのターミナルで次のコマンドを実行します。
+
+まず [`azd init`](https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/reference#azd-init)コマンドで環境の設定を行います。
 
 ```bash
-az ad signed-in-user show --query id --out tsv
+azd init
 ```
 
-本ワークショップで使用するAzure環境はBicepで構築します。Visual Studio Codeのターミナルで次のコマンドを実行します。
+環境名を聞かれるので「`aoai-workshop`」と入力します。
 
 ```bash
-cd infra
-
-az deployment sub create \
-  -l eastus \
-  --template-file main.bicep
+Enter a new environment name: [? for help] (azure-search-openai-demo-csharp-dev) aoai-workshop
 ```
+
+![](images/azd-init.png)
+
+![](images/azd-init2.png)
+
+
+次に[`azd up`](https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/reference#azd-up)コマンドを実行し、Azure リソースをプロビジョニングして、サンプルアプリをデプロイします。
+
+```
+azd up
+```
+
+コマンドを実行すると、Azureのサブスクリプションが聞かれるので、Azure OpenAIが利用可能なサブスクリプションを選びます。
+
+```bash
+? Select an Azure Subscription to use:  [Use arrows to move, type to filter]
+```
+
+次にデプロイするAzureリージョンを聞かれれるので、Azure OpenAIが利用可能なリージョンを選びます。
 
 コマンドを実行すると次の値を聞かれるので、自身の環境にあわせて入力します。
 
 |      項目       |                                                                                                        設定内容                                                                                                         |                設定例                |
 | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
-| principalId     | 上記手順で実行した`az ad signed-in-user show`コマンドで出力されたオブジェクトID                                                                                                                                         | xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx |
-| environmentName | 任意の名前                                                                                                                                                                                                              | openai-workshop                      |
-| location        | Azure OpenAI Serviceの「`text-davinci-003`」モデルが利用可能な[リージョン](https://learn.microsoft.com/ja-jp/azure/cognitive-services/openai/concepts/models#model-summary-table-and-region-availability)を指定します。 | eastus                               |
+| location        | Azure OpenAI Serviceの「`gpt-35-turbo`」「`text-embedding-ada-002`」モデルが利用可能な[リージョン](https://learn.microsoft.com/ja-jp/azure/cognitive-services/openai/concepts/models#model-summary-table-and-region-availability)を指定します。 | eastus                               |
 | publisherEmail  | API Managamentの管理者のメールアドレス                                                                                                                                                                                  | hoge@fuga.com                        |
 | publisherName   | API Managamentの管理者の名前                                                                                                                                                                                            | hoge                                 |
 
 
-![](images/infra2.png)
+
+### Azure Developer CLIの構成
+環境を構築している間に、azd テンプレートの構成を確認しましょう。次のディレクトリ構成となっています。
+
+```bash
+├── .devcontainer              [ DevContainer のための設定ファイル ]
+├── .github                    [ GitHub workflowの設定ファイル ]
+├── infra                      [ Azureリソースを作成するためのディレクトリ ]
+│   ├── main.bicep             [ メインのIaCコード ]
+│   ├── main.parameters.json   [ パラメータファイル ]
+│   └── core                   [ リファレンスライブラリからコピーしたBicepモジュールなど ]
+└── azure.yaml                 [ アプリケーションと Azure リソースの設定 ]
+```
+
+Azure Developer CLIでは、ワークフローとデプロイをカスタマイズするためのさまざまな拡張ポイントがサポートされています。フックを使用すると、コマンドと azd サービス ライフサイクル イベントの前後にカスタム スクリプトを実行できます。
+
+|             名前             |                             説明                             |
+| ---------------------------- | ------------------------------------------------------------ |
+| prerestore / postrestore     | パッケージの依存関係が復元される前と後に実行                 |
+| preprovision / postprovision | Azure リソースが作成される前と後に実行                       |
+| predeploy / postdeploy       | アプリケーション コードが Azure にデプロイされる前と後に実行 |
+| preup / postup               | 結合されたデプロイ パイプラインの前後に実行                  |
+| predown / postdown           | リソースが削除される前と後に実行                             |
+
+
+Azure Developer CLIでは、ワークフローとデプロイをカスタマイズするためのさまざまな拡張ポイントがサポートされています。フックを使用すると、コマンドと azd サービス ライフサイクル イベントの前後にカスタム スクリプトを実行できます。
+
+たとえば今回のサンプルの場合、`azure.yaml`をみると`postprovision`フックが設定されているため、BicepによってAzureリソースが作成し終わったあとに、`./scripts/prepdocs.ps1`または`./scripts/prepdocs.sh`が実行されます。この`prepdocs.ps1/prepdocs.sh`は`/data`配下のPDFデータから文字情報を抽出しAzure Blob Storageにチャンク分割したファイルを格納してAzure Cognitive Searchにインデックスを登録しています。詳細については、Part3を確認してください。
+
+```yaml
+name: azure-search-openai-demo-csharp
+metadata:
+  template: azure-search-openai-demo-csharp@0.0.3-beta
+services:
+  web:
+    project: ./app/backend/
+    host: containerapp
+    language: dotnet
+    docker:
+      path: ../Dockerfile
+      context: ../
+hooks:
+  postprovision:
+    windows:
+      shell: pwsh
+      run: ./scripts/prepdocs.ps1
+      interactive: true
+      continueOnError: false
+    posix:
+      shell: sh
+      run: ./scripts/prepdocs.sh
+      interactive: true
+      continueOnError: false
+```
+
+
+?> azd コマンドの詳細については[ドキュメント](https://learn.microsoft.com/ja-jp/azure/developer/azure-developer-cli/overview)を参照してください。
+
+
+
 
 デプロイの経過はAzure Portalからも確認できます。指定したリソースグループを開き、 **[設定]** - **[デプロイ]** をクリックするとリソースが表示されます。
 
@@ -215,36 +292,8 @@ Azureポータルを開き、「 **Form Recognizer** 」を選びます。
 
 ![](images/form1.png)
 
-**[+ 作成]** ボタンをクリックします。
 
-![](images/form2.png)
-
-プロジェクトの詳細でサブスクリプションとリソースグループ「`openai-workshop`」を選びます。
-
-![](images/form3.png)
-
-インスタンスの詳細で以下を設定します。
-
-|    項目    |                          設定値                          |
-| ---------- | -------------------------------------------------------- |
-| リージョン | East US                                                  |
-| 名前       | 任意の名前(グローバルで一意となるように設定してください) |
-| 価格レベル | Free F0                                                  |
-
-![](images/form4.png)
-
-本番環境で利用するときは、ネットワークセキュリティ/Identityを適切に構成する必要がありますが、本ワークショップではデフォルトのままとします。
-
-![](images/form5.png)
-
-![](images/form6.png)
-
-設定項目に誤りが無ければ、[ **作成** ] ボタンをクリックします。
-
-![](images/form7.png)
-![](images/form8.png)
-
-リソースが作成できたら、「 **Form Recognizerスタジオ** 」 を起動します。
+「 **Form Recognizerスタジオ** 」 を起動します。
 ![](images/form9.png)
 
 
@@ -279,7 +328,6 @@ Form Recognizer Studioの [ **Browser for a file** ] をクリックして、ダ
 
 Form Recognizerを使って、身近なドキュメントの読み取りを試してみましょう。そして精度や取得できる情報などを調べ、どう業務で活用できそうかをチームでディスカッションして発表しましょう。
 
-また、大量のデータを一括で変換するにはどのような方法が良いか議論してみてください。
 
 ?>**参考情報**<br>
 [Azure Form Recognizer 製品情報](https://azure.microsoft.com/ja-jp/products/form-recognizer) <br>
@@ -299,109 +347,19 @@ Form Recognizerを使って、身近なドキュメントの読み取りを試�
 
 ## 💻ハンズオン
 
-### 1. データセットのチャンク分割
-?>ワークショップに必要なデータはあらかじめ`data`ディレクトリに準備されています。そのためこの手順は飛ばして、手順2に進んでもかまいません。またお手持ちのデータをもとに検索を行いたい場合は、データを差し替えてください。
-
-次に用意したテキストデータをChatGPTで扱えるようチャンク分割していきます。
-Visual Studio Codeを開き`notebook/TextChunking.ipynb`をダブルクリックします。
-
-本ワークショップ環境はJupyter Notebookの環境がセットアップされていますので、次のようなNotebookが表示されます。もしカーネルが選択されていない場合は「 **Python 3.10.11** 」を選んでください。
-
-![](images/jupyter1.png)
-
-Jupyter Notebookのセルを1つずつ実行します。実行はセル左の **[▷]** ボタンをクリックします。
-
-
-![](images/jupyter2.png)
-
-1 つのドキュメントに含まれるトークン数は1度のコンテキストに指定できる最大トークン数を超えます。ドキュメントの文を指定したトークン数となるよう以下のチャンクに分割します。
-
-- テキストの分割方法
-
-`RecursiveCharacterTextSplitter` はチャンクが十分に小さくなるまで、順番に分割
-
-- チャンクサイズの測定方法
-
-[tiktoken](https://github.com/openai/tiktoken)ライブラリのトークナイザーを使用してトークン数を測定
-
-すべてのセルを実行し終わると、結果が`data/output/`以下にテキスト形式で格納されます。中身を確認してみましょう。
-
-![](images/jupyter6.png)
-
-![](images/jupyter7.png)
-
-ここで作成したデータセットをもとに検索を行います。
-
-
-### 2. Azure Cognitive SearchのIndex作成
+### 1. Azure Cognitive SearchのIndex作成
 
 Azureの環境が構築できたら、作成したデータセットをAzure Blob Storageに格納し、Azure Cognitive Searchにインデックスを登録します。
 
-登録のためのPythonのスクリプトは以下のフォルダにあります。まず環境変数'RG_NAME'にAzureのリソースグループ名を設定します。
+まず、サンプルコードの`data`配下には、「sample-data.pdf」というダミーデータが用意されています。これをいったん削除し、かわりに検索したい任意のPDFファイルを格納します。
+
+ここでは、インターネットに公開されてもよいデータを利用してください。
+
+
+VS Codeのターミナルから次のコマンドを実行してインデックスの作成を行います。
 
 ```bash
-cd ../scripts/
-export RG_NAME=openai-workshop
-```
-
-
-次のコマンドを実行してAzure Cognitive Searchの名前を環境変数`AZURE_SEARCH_SERVICE`に設定します。
-
-```bash
-export AZURE_SEARCH_SERVICE=$(az deployment group show \
-  -g $RG_NAME \
-  -n search-services \
-  --query properties.outputs.name.value \
-  --output tsv)
-echo $AZURE_SEARCH_SERVICE
-```
-
-Azure Cognitive Searchのインデックス名を環境変数`AZURE_SEARCH_INDEX`に設定します。
-```bash
-export AZURE_SEARCH_INDEX="gptkbindex"
-```
-
-データの保存先であるAzure Blog Strageにアクセスするためのストレージアカウント名を環境変数`AZURE_STORAGE_ACCOUNT`に設定します。
-
-```bash
-export AZURE_STORAGE_ACCOUNT=$(az deployment group show \
-  -g $RG_NAME \
-  -n storage \
-  --query properties.outputs.name.value \
-  --output tsv)
-echo $AZURE_STORAGE_ACCOUNT
-```
-
-同様にAzure Blog Strageのコンテナ名を環境変数`AZURE_STORAGE_CONTAINER`に設定します。
-
-```bash
-export AZURE_STORAGE_CONTAINER="content"
-```
-
-Azure Cognitive Searchのアクセスキーを環境変数`AZURE_SEARCH_KEY`に設定します。
-
-```bash
-export AZURE_SEARCH_KEY=$(az search admin-key show \
-  --resource-group $RG_NAME \
-  --service-name $AZURE_SEARCH_SERVICE \
-  --query "primaryKey" \
-  --output tsv)
-echo $AZURE_SEARCH_KEY
-```
-
-これで準備が整いました。
-
-次に、インデックス作成のためのPythonプログラム`prepdocs.py`を実行します。元となるデータは`/data/output/`に格納されているものとします。
-
-```bash
-pip install -r requirements.txt
-
-python prepdocs.py '../data/output/*' \
-  --storageaccount $AZURE_STORAGE_ACCOUNT  \
-  --container $AZURE_STORAGE_CONTAINER \
-  --searchservice $AZURE_SEARCH_SERVICE \
-  --searchkey $AZURE_SEARCH_KEY \
-  --index $AZURE_SEARCH_INDEX -v
+$ scripts/prepdocs.sh
 ```
 
 Azure Portalを開き、リソースグループ内のストレージアカウントをクリックします。
@@ -412,7 +370,7 @@ Azure Portalを開き、リソースグループ内のストレージアカウ�
 
 ![](images/search2.png)
 
-コンテナ―の中を確認すると、チャンク分割したテキストファイルが格納されています。
+コンテナ―の中を確認すると、チャンク分割したPDFファイルが格納されています。
 ![](images/search3.png)
 
 
@@ -442,47 +400,19 @@ Azure Portalを開き、リソースグループ内のストレージアカウ�
 cd ../app/backend
 ```
 
+バックエンドアプリのコードを参照して、プロンプトを修正します。
+
 バックエンドアプリはAzure AppServiceの[Web Apps](https://azure.microsoft.com/ja-jp/products/app-service/web)にデプロイします。
 
 ?> Azure AppServiceのWeb Appsは、Azure上でWebアプリをホストするためのプラットフォームです。簡単に作成/デプロイ/スケーリングができ、さまざまなプログラミング言語やフレームワークに対応しています。高可用性とスケーラビリティを提供し、継続的なデプロイと統合もサポートしています。また認証やSSL証明書の統合などが出来るのが特徴です。
 
-Visual Studio Codeのターミナルを開いて次のコマンドを実行します。ここでは、WebAppsの名前を環境変数`APPSERVICE_NAME`に設定します。
+Visual Studio Codeのターミナルを開いて次のコマンドを実行します
 
 ```bash
-export APPSERVICE_NAME=$(az deployment group show \
-  -g $RG_NAME \
-  -n web \
-  --query properties.outputs.name.value \
-  --output tsv)
-echo $APPSERVICE_NAME
+azd deploy
 ```
 
-すでにWebAppsの環境は出来上がっているため、次のコマンドを実行してアプリケーションをデプロイします。今回はランタイムとして`Python:3.10`を指定します。
-
-```bash
-az webapp up \
-  -n $APPSERVICE_NAME \
-  -l eastus \
-  --runtime PYTHON:3.10 \
-  --sku B1
-```
-
-このコマンドはローカルのサンプルプログラムをZIP形式で圧縮し、WebAppsにアップロードします。数分待つとデプロイが完了します。
-
-![](images/backend1.png)
-
-
-次のコマンドを実行して、APIのエンドポイントを確認します。
-
-```bash
-az webapp show \
-  -g $RG_NAME \
-  -n $APPSERVICE_NAME \
-  --query hostNames[0] \
-  --output tsv
-```
-
-APIのエンドポイントはAzure Portalからも確認できます。リソースグループ内のApp Serviceを選択し、[ **概要** ]-[ **既定のドメイン** ]をクリップボードにコピーします。
+Azure PortalからAPIのエンドポイントを確認します。リソースグループ内のApp Serviceを選択し、[ **概要** ]-[ **既定のドメイン** ]をクリップボードにコピーします。
 
 ![](images/backend2.png)
 
@@ -556,7 +486,7 @@ https://app-backend-xxx.azurewebsites.net/swagger.json
 
 
 
-# **Part4: API統合管理基盤の作成** 
+# **Part4: API統合管理基盤の作成(削除予定)** 
 Azure Cognitive Search/Azure OpenAI Service/AppServiceを使って検索エンジンから自然言語で応答を返すAPIが作成できました。これをWebブラウザから利用できるシングルページアプリケーションやモバイルアプリケーション、ローコードツールで開発したアプリケーションなどから便利に利用できるよう、APIの統合管理を行います。
 
 Azure API Managementは、APIを統合管理するサービスでAPIプロキシ/管理ポータル/ポリシー管理/分析などの機能を提供します。
@@ -657,447 +587,8 @@ API Managementは高機能なAPI管理サービスです。次のような課題
 
 
 
-# **Part5: フロントエンドアプリケーションの開発/デプロイ** 
 
-いよいよ動作するAPIができたので、このAPIのにアクセスするチャットアプリを作成します。サンプルはTypeScriptとReactを使用した静的Webアプリケーションで、ソースコードは`/app/frontend`にあります。
-
-Azure Static Web Appsは、フロントエンドの静的Webアプリケーション(HTML/CSS、JavaScriptなど)をホストするためのサービスです。SPA(Single Page Application)や静的なウェブサイトなどを簡単に展開できます。
-
-Azure Static Web Appsは、GitHubなどのソースコードリポジトリと連携して、自動的にビルド、デプロイ、ホスティングを行います。また、Azure FunctionsやAzure Logic AppsなどのサーバーレスバックエンドやAPI Managementと統合することも可能です。
-
-
-![](images/part5-overview.png)
-
-#### このパートのゴール
-* Static Web Appsを使ってフロントエンドアプリケーションを動かすことができる
-* GitHubと連携したCI/CDのしくみを設定できる
-* APIキーの安全な取り扱い方法を知る
-
-## 💻ハンズオン
-
-
-### 1. Frontendのデプロイ
-
-Azureポータルを開き、「 **Web&Mobile** 」の中から「 **静的Webアプリ** 」を選びます。
-
-![](images/swa1.png)
-
-プロジェクトの詳細でサブスクリプションとリソースグループ「`openai-workshop`」を選びます。
-
-![](images/swa2.png)
-
-ホスティングプランを「**Standard: 汎用の運用アプリの場合**」とし、リージョンを「`East US 2`」にします。
-
-![](images/swa3.png)
-
-次にデプロイを選択します。今回はGitHubを選び、ご自身のアカウントでサインインをしてください。
-GitHubのリポジトリは今回のサンプルアプリをフォークしたリポジトリ「``」とし、分岐(ブランチ)を「`workshop`」とします。
-
-ビルドの詳細については以下のとおり設定します。
-
-|        項目        |    設定値     |
-| ------------------ | ------------- |
-| ビルドのプリセット | React         |
-| アプリの場所       | /app/frontend |
-| API の場所         | api           |
-| 出力先             | build         |
-
-![](images/swa4.png)
-
-Azure Static WebApp ではビルドとデプロイに必要となるGitHub Actionsのワークフローファイルを自動で作成します。「**プレビューワークフロー**」を確認して内容を確認します。
-
-![](images/swa5.png)
-
-設定項目に問題が無ければ[**作成**]をクリックします。
-
-![](images/swa6.png)
-
-![](images/swa7.png)
-
-ここで、[ **概要** ]の[ **デプロイ履歴** ]-[ **GitHubアクションの実行** ]をクリックするとビルドとデプロイの様子を確認できます。
-
-![](images/swa8.png)
-
-![](images/swa12.png)
-
-これでReactアプリケーションがAzure上にデプロイされました。ただし、このアプリケーションはAPI Managementで管理したAPIを呼び出してチャットを行います。その際、APIキーなどをクライアント側のアプリケーションで保持するとキー情報の漏洩につながりますので、サーバサイドでプロキシさせることが望ましいでしょう。
-
-Static Web AppsにはバックエンドAPIと連携する便利な機能が提供されているのでそれを利用します。
-AzureポータルでStatic Web Apps「`frontend`」を選び「 **API** 」をクリックします。
-
-![](images/swa9.png)
-
-ここで「リンク」をクリックするとバックエンドとして登録したいサービスを選べますので、以下を設定します。
-
-|            項目            |           設定値           |
-| -------------------------- | -------------------------- |
-| バックエンドリソースの種類 | API Management             |
-| サブスクリプション         | ご自身のサブスクリプション |
-| リソース名                 | API Managementの名前       |
-
-![](images/swa10.png)
-
-リンクが完了すると、次の画面になりますので「バックエンドリソース名」をクリックします。
-![](images/swa11.png)
-
-連携したAPI Managementの画面に遷移します。次にStatic Web AppsからどのAPIを使いたいかを設定します。
-
-[**製品** ]を選び「**Generated for Static Web Apps resource with default hostname: xxx** 」をダブルクリックします。
-
-![](images/swa17.png)
-
-これはStatic Web AppsがAPI Managementを登録したときに自動で生成した製品グループで、デフォルトではどのAPIも利用できないようになっていますが、ここに今回作成したAPIを追加します。
-
-![](images/swa18.png)
-
-[**API**]を選び、[**+ 追加**]をクリックします。
-
-![](images/swa19.png)
-
-Static Web Appsでホストしたfrontendから利用したいAPIを選べますので、ここでは[ **Enterprise search API using Azure OpenAI Service** ]を選択します。
-
-![](images/swa20.png)
-
-![](images/swa21.png)
-
-これで準備が完了しました。
-
-
-AzureポータルからfrontendのURLを調べブラウザでアクセスします。
-
-![](images/swa22.png)
-
-チャット画面が表示されるので質問事項を入力してエンターキーを押します。
-
-![](images/swa23.png)
-
-すると、Azure OpenAI Service/Azure Cognitive Searchが検索結果を表示します。またその回答をつくる根拠となったドキュメント名も表示されているのがわかります。
-
-![](images/swa24.png)
-
-
-チャットの **💡** アイコンをクリックすると、回答に使用されたプロンプトの内容(検索クエリ/ドキュメント検索/過去のチャット履歴)を確認できます。
-
-![](images/swa26.png)
-
-チャットの **📝** アイコンをクリックすると、回答に使用されたAzure Cognitive Search の検索結果を確認できます。
-
-![](images/swa27.png)
-
-
-
-## 📖演習
-今回の演習ではフロントエンドをSPAで作成しましたが、モバイルアプリケーションやPowerAppsを利用したローコード開発で利用するにはどのようにすればよいか、チームでディスカッションして発表してください。
-
-また余力がある人は、実際にアプリケーションを開発して動作確認をしてみてください。
-
-![](images/powerapps-connector.png)
-
-# **付録A: フロントアプリのユーザ認証** 
-
-?> 以下の手順は、ワークショップで時間が余ったらお試しください。
-
-Static Web Appsには組み込み認証機能があり、デフォルトで次のIDプロバイダでの認証が有効になっています
-
-* Azure Active Directory
-* GitHub
-* Twitte
-
-組み込み認証の設定はサンプルリポジトリの`app/frontend/`にある「`staticwebapps.config.json`」で行います。
-
-`staticwebapps.config.json.sample`を`staticwebapps.config`にリネームしてください。
-
-
-次の設定ファイルでは、Azure ADでのユーザ認証を行い(=TwitterとGitHubの認証を無効化)、認証されていないユーザは認証画面に遷移するよう設定している例です。
-
-```staticwebapps.config
-{
-  "routes": [
-      {
-          "route": "/.auth/login/twitter",
-          "statusCode": 404
-      },
-      {
-          "route": "/.auth/login/github",
-          "statusCode": 404
-      },
-      {
-          "route": "/*",
-          "allowedRoles": [
-              "authenticated"
-          ]
-      }
-  ],
-  "responseOverrides": {
-      "401": {
-          "statusCode": 302,
-          "redirect": "/.auth/login/aad"
-      }
-  }
-}
-```
-
-Visual Studio Codeのターミナルから次のコマンドを実行し、`staticwebapps.config`をプッシュします。
-
-```bash
-git add app/frontend/staticwebapps.config
-git commit -m "Add: Authentication to Frontend"
-
-git push origin workshop
-```
-
-ふたたび、AzureポータルからfrontendのURLを確認しアクセスします。
-すると、Azure ADの認証ダイアログが表示されるので、ユーザIDとパスワードを入力します。
-
-![](images/swa-auth2.png)
-
-![](images/swa-auth3.png)
-
-認証が成功すると、アプリケーションの同意画面が表示されるので、「`Grant Consent`」をクリックしてください。
-
-![](images/swa-auth1.png)
-
-これで、認証されたユーザのみが利用できるチャットアプリケーションが作成できました。
-
-![](images/swa-auth4.png)
-
-
-
-#### (参考) ログインログアウト処理
-
-Static Web Appsでログイン処理とログアウト処理を行いたいときは`/.auth/login/<provider name>`および`/.auth/logout/<provider name>`に対してリンクを設定します。
-
-|       プロバイダ       |    ログインルート    |
-| ---------------------- | -------------------- |
-| Azure Active Directory | /.auth/login/aad     |
-| GitHub                 | /.auth/login/github  |
-| Twitter                | /.auth/login/twitter |
-
-たとえば、Azure ADの場合は次のようになります。
-```html
-<a href="/.auth/login/aad" role="button">Login</a>
-<a href="/.auth/logout/aad"role="button">Logout</a>
-```
-?>**参考情報**<br>
- [Azure Static Web Apps の認証と承認](https://learn.microsoft.com/ja-jp/azure/static-web-apps/authentication-authorization?tabs=invitations)
-
-
-#### (参考) ユーザ情報の取得
-Static Web Appsでは`/.auth/me` を呼び出して認証されたユーザ情報が取得できます。
-
-`/.auth/me` にアクセスすると次のような情報が取得できます。
-```json
-{
-  "clientPrincipal": {
-    "identityProvider": "aad",
-    "userId": "xxxxxx",
-    "userDetails": "user@domain.co.jp",
-    "userRoles": [
-      "anonymous",
-      "authenticated"
-    ]
-  }
-}
-```
-
-または、次のコードでユーザ情報を取得できます。
-
-```javascript
-async function getUserInfo() {
-  const response = await fetch('/.auth/me');
-  const payload = await response.json();
-  const { clientPrincipal } = payload;
-  return clientPrincipal;
-}
-
-console.log(await getUserInfo());
-```
-
-
-?>**参考情報**<br>
-[Azure Static Web Apps でのユーザー情報へのアクセス](https://learn.microsoft.com/ja-jp/azure/static-web-apps/user-information?tabs=javascript)
-
-
-#### (参考) ロールの管理
-Static Web Appsのアプリにアクセスするすべてのユーザーは、1つまたは複数のロールに属しています。 ユーザは、以下の2つの組み込みロールに属することができます。
-
-
-|     ロール     |                              説明                               |
-| -------------- | --------------------------------------------------------------- |
-| 匿名ロール     | すべてのユーザーは自動的に 「匿名」 ロールに属する              |
-| 認証済みロール | ログインしているすべてのユーザーは、「認証済み」 ロールに属する |
-
-
-組み込みロール以外にカスタム ロールをユーザーに割り当てることもできます。手順については、[ロール管理](https://learn.microsoft.com/ja-jp/azure/static-web-apps/authentication-authorization?tabs=invitations#role-management)を確認してください。
-
-
-#### (参考) カスタム認証
-Azure Static Web Apps が提供する組み込み認証では、Azureが管理するプロバイダー登録が使用されます。登録の柔軟性を高めるため、既定値をカスタム登録でオーバーライドできます。
-
-またカスタム認証により、OpenID Connect をサポートするカスタム プロバイダーを構成できます。この構成では、複数の外部プロバイダーを登録できます。
-
-ただし、カスタム登録を使用すると、事前構成済みのすべてのプロバイダーが無効になります。
-
-カスタム認証を行うときは、「`staticwebapps.config.json`」に次の設定を行います。
-
-```json
-  "auth": {
-    "identityProviders": {
-        "azureActiveDirectory": {
-            "registration": {
-                "openIdIssuer": "https://login.microsoftonline.com/<AAD_TenantID>",
-                "clientIdSettingName": "<AAD_ClientID>",
-                "clientSecretSettingName": "<AAD_Client_Secret>"
-            }
-        }
-    }
-  },
-```
-
-?>**参考情報**<br>
- [Azure Static Web Apps でのカスタム認証](https://learn.microsoft.com/ja-jp/azure/static-web-apps/authentication-custom?tabs=aad)
-
-
-# **付録B: PowerAppsによるアプリ開発** 
-?> 以下の手順は、ワークショップで時間が余ったらお試しください。また、PowerAppsでプレミアムコネクタが利用できるライセンスが必要になります。
-
-MicrosoftのPowerAppsは、ビジネスアプリケーションを構築するためのプラットフォームです。PowerAppsを使用すると、ドラッグアンドドロップ操作で簡単にアプリケーションを作成することができます。また、PowerAppsは、Microsoftの他のサービス(Azure/Office 365やDynamics 365)との連携が容易で、既存の業務システムとの親和性が高いアプリケーションの開発が短期間でできます。
-
-本ワークショップではフロントエンドアプリケーションとして、ReactによるWebアプリケーションを使って動作検証しましたが、OpenAI Serviceの呼び出し部分をAPI化しているため、PowerAppsのローコードアプリケーションからそのまま利用できます。
-
-![](images/powerapps-overview.png)
-
-#### カスタムコネクタの作成
-
-PowerAppsにログインし、作成したAPIを呼び出すためのカスタムコネクタを作成します。
-
-メニューから「**カスタムコネクタ**」をクリックします。
-![](images/powerapps-connector1.png)
-
-「 **+カスタムコネクタの新規作成** 」をクリックし、「 **Azureサービスから作成する(プレビュー)** 」を選びます。
-
-![](images/powerapps-connector2.png)
-
-
-接続したいAzureのサービスを選択するダイアログが表示されるので、必要な情報を選択します。ここでは、OpenAI Serviceに接続するAPIを管理するAPI Managementのリソースを指定します。
-
-![](images/powerapps-connector3.png)
-
-次にスキーマ/接続先のホスト/ベースURLを選択画面が表示されるので、内容が正しいかどうかを確認します。
-
-コネクタのアイコンは分かりやすい画像に変更してもかまいません。
-
-![](images/powerapps-connector4.png)
-
-次に、セキュリティ設定を行います。認証タイプは「**API キー**」とし、APIキーに以下の設定が設定されていることを確認します。
-
-![](images/powerapps-connector5.png)
-
-次に、APIのアクションを定義する画面が表示されます。内容を確認してテストに進みます。
-
-![](images/powerapps-connector6.png)
-
-
-テストを行うためには、「 **接続** 」を作成する必要があります。「 **+新しい接続** 」をクリックしてAPIキーを登録します。
-
-![](images/powerapps-connector7.png)
-
-ここで登録するAPIキーはAPI Managamentで発行されたキーです。「 **作成** 」ボタンをクリックして完了します。
-
-![](images/powerapps-connector8.png)
-
-これで、PowerAppsとAzureとの連携が完了しました。
-
-?>**参考情報**<br>
-[カスタム コネクタとは](https://learn.microsoft.com/ja-jp/connectors/custom-connectors/)
-
-#### アプリケーションの作成
-
-PowerAppsでアプリケーションを作成します。
-
-PowerAppsのトップページの「 **+作成** 」をクリックし、「 **空のアプリ** 」を選択します。
-
-![](images/powerapps1.png)
-
-
-どのような種類のアプリを作成するかを聞かれるので、「 **空のキャンパスアプリ** 」の「 **+作成** 」をクリックします。
-
-![](images/powerapps2.png)
-
-
-キャンパスアプリの名前(任意)を設定し、形式を選んで「 **+作成** 」をクリックします。
-
-![](images/powerapps3.png)
-
-これでアプリが作成できました。
-
-![](images/powerapps4.png)
-
-次に、カスタムコネクタ経由でAzure上のAPIを呼び出すための設定を行います。「 **データ** 」―「 **データの追加** 」をクリックします。
-
-![](images/powerapps-data1.png)
-
-
-ここでデータソースの選択画面が表示されるので、ご自身で作成したカスタムコネクタ「`OpenAI`」を選びます。
-
-![](images/powerapps-data2.png)
-
-APIを呼び出すコネクタがアプリケーションのデータソースとして追加されます。
-
-![](images/powerapps-data3.png)
-
-これで準備ができたので、アプリケーションにコンポーネントを追加します。
-
-「 **+挿入** 」―「 **テキスト入力** 」を選び、質問を入力するテキストボックスを追加します。
-
-![](images/powerapps5.png)
-
-![](images/powerapps6.png)
-
-同様の手順でAPIを呼び出すための「 **ボタン** 」も追加します。サイズやレイアウトはお好みで調整してください。
-
-![](images/powerapps7.png)
-
-
-次にボタンを押されたときの処理を記述します。ボタンを選択し、関数に以下を追加します。
-
-ClearCollect関数は、指定したコレクションのデータを全て削除した後、データを追加する関数です。
-
-ここでは`EnterprisesearchAPIusingAzureOpenAIService.postask()`を呼び出し、変数`answers`に結果を格納しています。
-
-なお、第二引数の`TextInput1.Text`はテキストボックスに入力された値(=OpenAIへの質問)のテキストデータをセットしています。
-
-```bash
-ClearCollect(answers,EnterprisesearchAPIusingAzureOpenAIService.postask("rtr",TextInput1.Text));
-```
-
-![](images/powerapps8.png)
-
-次に結果を表示するコンポーネントを追加します。APIからのレスポンスは`answers`に格納されているため、これを表示するため「 **空の垂直ギャラリー** 」を追加します。ここにテキストラベルを追加して、データソースとして「`answers`」を選択します。
-
-![](images/powerapps12.png)
-
-フィールドをクリックし、追加したテキストラベルに`answers`を設定します。なお、サイズなどはお好みで調整してください。
-
-![](images/powerapps14.png)
-
-これでアプリケーションの作成は終わりましたので、動作確認を行います。「 **アプリのプレビュー** 」をクリックします。
-
-![](images/powerapps13.png)
-
-テキストボックスに質問を入力し、ボタンをクリックすると垂直ギャラリーに結果が表示されるのが分かります。
-
-![](images/powerapps15.png)
-
-PowerAppsでは各コンポーネントのレイアウトやデザイン、サイズなどをGUIから自由に設定できます。またコンポーネントのアクションもExcel関数を書くイメージで作成できますので、自由にカスタマイズしてください。
-
-![](images/powerapps16.png)
-
-?>**参考情報**<br>
-[Power Appsとは](https://learn.microsoft.com/ja-jp/power-apps/powerapps-overview)
-
-
-# **付録C: Logic App を使って Form Recognizer で PDF をテキスト化する** 
+# **付録A: Logic App を使って Form Recognizer で PDF をテキスト化する** 
 Azure OpenAI と Cognitive Search を連携する場合、ドキュメントのテキスト化が必要な場合があります。Python 、REST API等で Form Recognizer と連携することで PDF や PNG 等のドキュメントをテキスト化することができます。
 また、Logic App を使うことでノーコードで実施することもできますので、手順を以下に記載します。
 
