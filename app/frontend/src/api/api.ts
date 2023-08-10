@@ -1,7 +1,7 @@
 import { AskRequest, AskResponse, ChatRequest } from "./models";
 
 export async function askApi(options: AskRequest): Promise<AskResponse> {
-    const response = await fetch("/api/ask", {
+    const response = await fetch("/ask", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -10,6 +10,7 @@ export async function askApi(options: AskRequest): Promise<AskResponse> {
             question: options.question,
             approach: options.approach,
             overrides: {
+                retrieval_mode: options.overrides?.retrievalMode,
                 semantic_ranker: options.overrides?.semanticRanker,
                 semantic_captions: options.overrides?.semanticCaptions,
                 top: options.overrides?.top,
@@ -31,7 +32,7 @@ export async function askApi(options: AskRequest): Promise<AskResponse> {
 }
 
 export async function chatApi(options: ChatRequest): Promise<AskResponse> {
-    const response = await fetch("/api/chat", {
+    const response = await fetch("/chat", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -40,6 +41,7 @@ export async function chatApi(options: ChatRequest): Promise<AskResponse> {
             history: options.history,
             approach: options.approach,
             overrides: {
+                retrieval_mode: options.overrides?.retrievalMode,
                 semantic_ranker: options.overrides?.semanticRanker,
                 semantic_captions: options.overrides?.semanticCaptions,
                 top: options.overrides?.top,
@@ -62,5 +64,5 @@ export async function chatApi(options: ChatRequest): Promise<AskResponse> {
 }
 
 export function getCitationFilePath(citation: string): string {
-    return `/api/content/${citation}`;
+    return `/content/${citation}`;
 }
