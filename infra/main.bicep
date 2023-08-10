@@ -29,39 +29,92 @@ param private bool = false
 
 param resourceGroupName string = ''
 
+// api
 param apiManagementName string = ''
 
+// appservice
 param appServicePlanName string = ''
 param backendServiceName string = ''
 
+// search
 param searchServicesName string = ''
+param searchServiceResourceGroupName string = ''
 param searchServicesSkuName string = 'standard'
-param storageAccountName string = ''
-param containerName string = 'content'
+param searchServiceResourceGroupLocation string = location
 param searchIndexName string = 'gptkbindex'
 
-param cognitiveServicesAccountName string = ''
-param cognitiveServicesSkuName string = 'S0'
+// storage
+param storageAccountName string = ''
+param storageResourceGroupName string = ''
+param storageResourceGroupLocation string = location
+param storageContainerName string = 'content'
+
+
+// openai
+param openAiServiceName string = ''
+param openAiResourceGroupName string = ''
+@description('Location for the OpenAI resource group')
+// @allowed(['eastus', 'southcentralus', 'westeurope'])
+@metadata({
+  azd: {
+    type: 'location'
+  }
+})
+param openAiResourceGroupLocation string
+param openAiSkuName string = 'S0'
+
+// param cognitiveServicesAccountName string = ''
+// param cognitiveServicesSkuName string = 'S0'
+
 param gptDeploymentName string = 'davinci'
+param gptDeploymentCapacity int = 30
 param gptModelName string = 'gpt-35-turbo'
 param chatGptDeploymentName string = 'chat'
+param chatGptDeploymentCapacity int = 30
 param chatGptModelName string = 'gpt-35-turbo'
+param embeddingDeploymentName string = 'embedding'
+param embeddingDeploymentCapacity int = 30
+param embeddingModelName string = 'text-embedding-ada-002'
+
+// formrecognizer
+param formRecognizerServiceName string = ''
+param formRecognizerResourceGroupName string = ''
+param formRecognizerResourceGroupLocation string = location
+param formRecognizerSkuName string = 'S0'
+
 
 var abbrs = loadJsonContent('abbreviations.json')
 var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
-var tags = { 'env-name': environmentName }
+var tags = { 'azd-env-name': environmentName }
 
 // Organize resources in a resource group
-resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
+resource resourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   name: !empty(resourceGroupName) ? resourceGroupName : '${environmentName}'
   location: location
   tags: tags
 }
 
+resource openAiResourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' existing = if (!empty(openAiResourceGroupName)) {
+  name: !empty(openAiResourceGroupName) ? openAiResourceGroupName : resourceGroup.name
+}
+
+resource formRecognizerResourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' existing = if (!empty(formRecognizerResourceGroupName)) {
+  name: !empty(formRecognizerResourceGroupName) ? formRecognizerResourceGroupName : resourceGroup.name
+}
+
+resource searchServiceResourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' existing = if (!empty(searchServiceResourceGroupName)) {
+  name: !empty(searchServiceResourceGroupName) ? searchServiceResourceGroupName : resourceGroup.name
+}
+
+resource storageResourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' existing = if (!empty(storageResourceGroupName)) {
+  name: !empty(storageResourceGroupName) ? storageResourceGroupName : resourceGroup.name
+}
+
+
 // Create an API Managament
 module apimanagement 'core/api/apimanagement.bicep' = {
   name: 'apimanagement'
-  scope: rg
+  scope: resourceGroup
   params: {
     name: !empty(apiManagementName) ? apiManagementName : '${abbrs.apiManagementService}${resourceToken}'
     publisherEmail: publisherEmail
@@ -78,7 +131,7 @@ module apimanagement 'core/api/apimanagement.bicep' = {
 // Create an App Service Plan to group applications under the same payment plan and SKU
 module appServicePlan 'core/host/appserviceplan.bicep' = {
   name: 'appserviceplan'
-  scope: rg
+  scope: resourceGroup
   params: {
     name: !empty(appServicePlanName) ? appServicePlanName : '${abbrs.webServerFarms}${resourceToken}'
     location: location
@@ -94,24 +147,26 @@ module appServicePlan 'core/host/appserviceplan.bicep' = {
 // create a Web Apps for backend for backend apps
 module backend 'core/host/appservice.bicep' = {
   name: 'web'
-  scope: rg
+  scope: resourceGroup
   params: {
     name: !empty(backendServiceName) ? backendServiceName : '${abbrs.webSitesAppService}backend-${resourceToken}'
     location: location
-    tags: union(tags, { 'service-name': 'backend' })
+    tags: union(tags, { 'azd-service-name': 'backend' })
     appServicePlanId: appServicePlan.outputs.id
     runtimeName: 'python'
     runtimeVersion: '3.10'
+    appCommandLine: 'python3 -m gunicorn "app:create_app()"'
     scmDoBuildDuringDeployment: true
     managedIdentity: true
     appSettings: {
-      AZURE_BLOB_STORAGE_ACCOUNT: storage.outputs.name
-      AZURE_BLOB_STORAGE_CONTAINER: containerName
-      AZURE_OPENAI_SERVICE: cognitiveServices.outputs.name
+      AZURE_STORAGE_ACCOUNT: storage.outputs.name
+      AZURE_STORAGE_CONTAINER: storageContainerName
+      AZURE_OPENAI_SERVICE: openAi.outputs.name
       AZURE_SEARCH_INDEX: searchIndexName
-      AZURE_SEARCH_SERVICE: searchServices.outputs.name
+      AZURE_SEARCH_SERVICE: searchService.outputs.name
       AZURE_OPENAI_GPT_DEPLOYMENT: gptDeploymentName
       AZURE_OPENAI_CHATGPT_DEPLOYMENT: chatGptDeploymentName
+      AZURE_OPENAI_EMB_DEPLOYMENT: embeddingDeploymentName
     }
     // vnet integration for private environment
     private: private
@@ -120,15 +175,15 @@ module backend 'core/host/appservice.bicep' = {
   }
 }
 
-module cognitiveServices 'core/ai/cognitiveservices.bicep' = {
-  scope: rg
+module openAi 'core/ai/cognitiveservices.bicep' = {
+  scope: openAiResourceGroup
   name: 'openai'
   params: {
-    name: !empty(cognitiveServicesAccountName) ? cognitiveServicesAccountName : '${abbrs.cognitiveServicesAccounts}${resourceToken}'
-    location: location
+    name: !empty(openAiServiceName) ? openAiServiceName : '${abbrs.cognitiveServicesAccounts}${resourceToken}'
+    location: openAiResourceGroupLocation
     tags: tags
     sku: {
-      name: cognitiveServicesSkuName
+      name: openAiSkuName
     }
     deployments: [
       {
@@ -136,22 +191,27 @@ module cognitiveServices 'core/ai/cognitiveservices.bicep' = {
         model: {
           format: 'OpenAI'
           name: gptModelName
-          version: '0301'
+          version: '0613'
         }
-        scaleSettings: {
-          scaleType: 'Standard'
-        }
+        capacity: gptDeploymentCapacity
       }
       {
         name: chatGptDeploymentName
         model: {
           format: 'OpenAI'
           name: chatGptModelName
-          version: '0301'
+          version: '0613'
         }
-        scaleSettings: {
-          scaleType: 'Standard'
+        capacity: chatGptDeploymentCapacity
+      }
+      {
+        name: embeddingDeploymentName
+        model: {
+          format: 'OpenAI'
+          name: embeddingModelName
+          version: '2'
         }
+        capacity: embeddingDeploymentCapacity
       }
     ]
     // for private environment
@@ -160,12 +220,27 @@ module cognitiveServices 'core/ai/cognitiveservices.bicep' = {
   }
 }
 
-module searchServices 'core/search/search-services.bicep' = {
-  scope: rg
+module formRecognizer 'core/ai/cognitiveservices.bicep' = {
+  name: 'formrecognizer'
+  scope: formRecognizerResourceGroup
+  params: {
+    name: !empty(formRecognizerServiceName) ? formRecognizerServiceName : '${abbrs.cognitiveServicesFormRecognizer}${resourceToken}'
+    kind: 'FormRecognizer'
+    location: formRecognizerResourceGroupLocation
+    tags: tags
+    sku: {
+      name: formRecognizerSkuName
+    }
+  }
+}
+
+
+module searchService 'core/search/search-services.bicep' = {
+  scope: searchServiceResourceGroup
   name: 'search-services'
   params: {
     name: !empty(searchServicesName) ? searchServicesName : 'gptkb-${resourceToken}'
-    location: location
+    location: searchServiceResourceGroupLocation
     tags: tags
     authOptions: {
       aadOrApiKey: {
@@ -184,10 +259,10 @@ module searchServices 'core/search/search-services.bicep' = {
 
 module storage 'core/storage/storage-account.bicep' = {
   name: 'storage'
-  scope: rg
+  scope: storageResourceGroup
   params: {
     name: !empty(storageAccountName) ? storageAccountName : '${abbrs.storageStorageAccounts}${resourceToken}'
-    location: location
+    location: storageResourceGroupLocation
     tags: tags
     sku: {
       name: 'Standard_ZRS'
@@ -210,7 +285,7 @@ module storage 'core/storage/storage-account.bicep' = {
 
 // USER ROLES
 module openAiRoleUser 'core/security/role.bicep' = {
-  scope: rg
+  scope: openAiResourceGroup
   name: 'openai-role-user'
   params: {
     principalId: principalId
@@ -219,8 +294,18 @@ module openAiRoleUser 'core/security/role.bicep' = {
   }
 }
 
+module formRecognizerRoleUser 'core/security/role.bicep' = {
+  scope: formRecognizerResourceGroup
+  name: 'formrecognizer-role-user'
+  params: {
+    principalId: principalId
+    roleDefinitionId: 'a97b65f3-24c7-4388-baec-2e87135dc908'
+    principalType: 'User'
+  }
+}
+
 module storageRoleUser 'core/security/role.bicep' = {
-  scope: rg
+  scope: storageResourceGroup
   name: 'storage-role-user'
   params: {
     principalId: principalId
@@ -230,7 +315,7 @@ module storageRoleUser 'core/security/role.bicep' = {
 }
 
 module storageContribRoleUser 'core/security/role.bicep' = {
-  scope: rg
+  scope: storageResourceGroup
   name: 'storage-contribrole-user'
   params: {
     principalId: principalId
@@ -240,7 +325,7 @@ module storageContribRoleUser 'core/security/role.bicep' = {
 }
 
 module searchRoleUser 'core/security/role.bicep' = {
-  scope: rg
+  scope: searchServiceResourceGroup
   name: 'search-role-user'
   params: {
     principalId: principalId
@@ -250,7 +335,7 @@ module searchRoleUser 'core/security/role.bicep' = {
 }
 
 module searchContribRoleUser 'core/security/role.bicep' = {
-  scope: rg
+  scope: searchServiceResourceGroup
   name: 'search-contrib-role-user'
   params: {
     principalId: principalId
@@ -259,9 +344,19 @@ module searchContribRoleUser 'core/security/role.bicep' = {
   }
 }
 
+module searchSvcContribRoleUser 'core/security/role.bicep' = {
+  scope: searchServiceResourceGroup
+  name: 'search-svccontrib-role-user'
+  params: {
+    principalId: principalId
+    roleDefinitionId: '7ca78c08-252a-4471-8644-bb5ff32d4ba0'
+    principalType: 'User'
+  }
+}
+
 // SYSTEM IDENTITIES
 module openAiRoleBackend 'core/security/role.bicep' = {
-  scope: rg
+  scope: openAiResourceGroup
   name: 'openai-role-backend'
   params: {
     principalId: backend.outputs.identityPrincipalId
@@ -271,7 +366,7 @@ module openAiRoleBackend 'core/security/role.bicep' = {
 }
 
 module storageRoleBackend 'core/security/role.bicep' = {
-  scope: rg
+  scope: storageResourceGroup
   name: 'storage-role-backend'
   params: {
     principalId: backend.outputs.identityPrincipalId
@@ -281,7 +376,7 @@ module storageRoleBackend 'core/security/role.bicep' = {
 }
 
 module searchRoleBackend 'core/security/role.bicep' = {
-  scope: rg
+  scope: searchServiceResourceGroup
   name: 'search-role-backend'
   params: {
     principalId: backend.outputs.identityPrincipalId
@@ -301,7 +396,7 @@ param appSubnetAddressPrefix string = '10.0.2.0/24'
 param apimSubnetAddressPrefix string = '10.0.3.0/24'
 
 module vnet 'core/network/vnet.bicep' = if ( private ) {
-  scope: rg
+  scope: resourceGroup
   name: vnetName
   params: {
     vnetName: vnetName
@@ -320,7 +415,7 @@ module vnet 'core/network/vnet.bicep' = if ( private ) {
 
 // for private environment used by API Management
 module publicIp 'core/network/publicip.bicep' = if ( private ) {
-  scope: rg
+  scope: resourceGroup
   name: 'apimPublicIp'
   params: {
     publicIpName: '${abbrs.networkPublicIPAddresses}${resourceToken}'
@@ -331,7 +426,7 @@ module publicIp 'core/network/publicip.bicep' = if ( private ) {
 
 // Private Endpoint for app service
 module appServicePrivateEndpoint 'core/network/private-endpoint.bicep' = if ( private ) {
-  scope: rg
+  scope: resourceGroup
   name: 'appServicePrivateEndpoint'
   params: {
     privateDnsZoneName: 'privatelink.azurewebsites.net'
@@ -347,7 +442,7 @@ module appServicePrivateEndpoint 'core/network/private-endpoint.bicep' = if ( pr
 
 // Private Endpoint for search service
 module searchPrivateEndpoint 'core/network/private-endpoint.bicep' = if ( private ) {
-  scope: rg
+  scope: resourceGroup
   name: 'searchPrivateEndpoint'
   params: {
     privateDnsZoneName: 'privatelink.search.windows.net'
@@ -356,14 +451,14 @@ module searchPrivateEndpoint 'core/network/private-endpoint.bicep' = if ( privat
     vnetId: (private) ? vnet.outputs.vnetId : ''
     subnetId: (private) ? vnet.outputs.subnetId : ''
     privateEndpointName: 'pe-searchservice'
-    privateLinkServiceId: searchServices.outputs.id
+    privateLinkServiceId: searchService.outputs.id
     privateLinkServicegroupId: 'searchService'
   }
 }
 
 // Private Endpoint for storage
 module storagePrivateEndpoint 'core/network/private-endpoint.bicep' = if ( private ) {
-  scope: rg
+  scope: resourceGroup
   name: 'storagePrivateEndpoint'
   params: {
     privateDnsZoneName: 'privatelink.blob.core.windows.net'
@@ -379,7 +474,7 @@ module storagePrivateEndpoint 'core/network/private-endpoint.bicep' = if ( priva
 
 // Private Endpoint for openai service
 module openaiPrivateEndpoint 'core/network/private-endpoint.bicep' = if ( private ) {
-  scope: rg
+  scope: resourceGroup
   name: 'openaiPrivateEndpoint'
   params: {
     privateDnsZoneName: 'privatelink.openai.azure.com'
@@ -388,7 +483,7 @@ module openaiPrivateEndpoint 'core/network/private-endpoint.bicep' = if ( privat
     vnetId: (private) ? vnet.outputs.vnetId : ''
     subnetId: (private) ? vnet.outputs.subnetId : ''
     privateEndpointName: 'pe-openai'
-    privateLinkServiceId: cognitiveServices.outputs.id
+    privateLinkServiceId: openAi.outputs.id
     privateLinkServicegroupId: 'account'
   }
 }
@@ -484,7 +579,7 @@ param apimNSG array = [
 
 // NSG for API Management subnet
 module apimnsg 'core/network/nsg.bicep' = if ( private ) {
-  scope: rg
+  scope: resourceGroup
   name: 'NSG_apim'
   params: {
     nsgName: 'NSG_apim'
@@ -495,9 +590,24 @@ module apimnsg 'core/network/nsg.bicep' = if ( private ) {
 }
 
 output AZURE_LOCATION string = location
-output AZURE_OPENAI_SERVICE string = cognitiveServices.outputs.name
+output AZURE_TENANT_ID string = tenant().tenantId
+output AZURE_RESOURCE_GROUP string = resourceGroup.name
+
+output AZURE_OPENAI_SERVICE string = openAi.outputs.name
+output AZURE_OPENAI_RESOURCE_GROUP string = openAiResourceGroup.name
+output AZURE_OPENAI_GPT_DEPLOYMENT string = gptDeploymentName
+output AZURE_OPENAI_CHATGPT_DEPLOYMENT string = chatGptDeploymentName
+output AZURE_OPENAI_EMB_DEPLOYMENT string = embeddingDeploymentName
+
+output AZURE_FORMRECOGNIZER_SERVICE string = formRecognizer.outputs.name
+output AZURE_FORMRECOGNIZER_RESOURCE_GROUP string = formRecognizerResourceGroup.name
+
 output AZURE_SEARCH_INDEX string = searchIndexName
-output AZURE_SEARCH_SERVICE string = searchServices.outputs.name
+output AZURE_SEARCH_SERVICE string = searchService.outputs.name
+output AZURE_SEARCH_SERVICE_RESOURCE_GROUP string = searchServiceResourceGroup.name
+
 output AZURE_STORAGE_ACCOUNT string = storage.outputs.name
-output AZURE_STORAGE_CONTAINER string = containerName
+output AZURE_STORAGE_CONTAINER string = storageContainerName
+output AZURE_STORAGE_RESOURCE_GROUP string = storageResourceGroup.name
+
 output BACKEND_URI string = backend.outputs.uri
