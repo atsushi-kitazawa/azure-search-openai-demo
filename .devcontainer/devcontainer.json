@@ -12,11 +12,15 @@
 	},
 	"customizations": {
 			"vscode": {
+					"settings": {
+						"rest-client.decodeEscapedUnicodeCharacters": true
+					},
 					"extensions": [
 							"ms-azuretools.azure-dev",
 							"ms-azuretools.vscode-bicep",
 							"ms-python.python",
-							"humao.rest-client"
+							"humao.rest-client",
+							"arjun.swagger-viewer"
 					]
 			}
 	},
