@@ -1,14 +1,24 @@
-@backend = https://app-backend-xxxx.azurewebsites.net
+@backend = https://app-backend-xxx.azurewebsites.net
 ###
 
-
 ###
-POST {{backend}}/ask HTTP/1.1
+POST {{backend}}/chat HTTP/1.1
 content-type: application/json
 
 {
-    "approach": "rtr", 
-    "question": "水素ハイブリット電車における水素供給システムついて教えてください。"
+	"history": [
+		{
+			"user": "水素ハイブリッド電車とはなんですか"
+		}
+	],
+	"approach": "rrr",
+	"overrides": {
+		"retrieval_mode": "hybrid",
+		"semantic_ranker": true,
+		"semantic_captions": false,
+		"top": 1,
+		"suggest_followup_questions": false
+	}
 }
 
 ###
@@ -16,8 +26,14 @@ POST {{backend}}/ask HTTP/1.1
 content-type: application/json
 
 {
-    "approach": "rtr", 
-    "question": "私は鉄道会社に勤める技術者です。水素ハイブリット電車における水素供給システムついて箇条書きで教えてください。"
+	"question": "水素ハイブリッド電車とはなんですか",
+	"approach": "rtr",
+	"overrides": {
+		"retrieval_mode": "hybrid",
+		"semantic_ranker": true,
+		"semantic_captions": false,
+		"top": 1
+	}
 }
 
 
@@ -25,24 +41,35 @@ content-type: application/json
 API Managementの動作確認
 ###
 
-@apimanagement = https://apim-xxxx.azure-api.net
+@apimanagement = https://apim-xxx.azure-api.net
 ###
 POST {{apimanagement}}/api/ask HTTP/1.1
 Content-Type: application/json
 
 {
-    "approach": "rtr", 
-    "question": "水素ハイブリット電車における水素供給システムついて教えてください。"
+	"question": "水素ハイブリッド電車とはなんですか",
+	"approach": "rtr",
+	"overrides": {
+		"retrieval_mode": "hybrid",
+		"semantic_ranker": true,
+		"semantic_captions": false,
+		"top": 1
+	}
 }
 
 
-
 ###
 POST {{apimanagement}}/api/ask HTTP/1.1
 Content-Type: application/json
-Ocp-Apim-Subscription-Key: xxxxxxxxxx
+Ocp-Apim-Subscription-Key: xxxxxxxxxxxxxxxx
 
 {
-    "approach": "rtr", 
-    "question": "水素ハイブリット電車における水素供給システムついて教えてください。"
+	"question": "水素ハイブリッド電車とはなんですか",
+	"approach": "rtr",
+	"overrides": {
+		"retrieval_mode": "hybrid",
+		"semantic_ranker": true,
+		"semantic_captions": false,
+		"top": 1
+	}
 }
