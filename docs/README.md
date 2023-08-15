@@ -14,7 +14,12 @@ OpenAIによって開発された大規模な言語モデルGPTを活用する�
 
 このワークショップでは、 <span style="font-weight: bold; color: steelblue;"> 研究論文の内容もとに適切な回答を作成するチャットシステム</span> の作成を通して、Azure OpenAI Service やAzure Cognitive Searchなどの使い方やチャットシステムを社内に展開するためのWebアプリケーションの作成やAPI基盤の整備などの基礎を学びます。
 
-このワークショップの特徴は次の2つです。
+このワークショップの特徴は次の3つです。
+
+- **国内リージョンを利用できる**
+
+Azureの環境を東日本リージョン(japaneast)に構築できます
+
 
 - **専門用語や業界独自のナレッジを検索できる**
 
@@ -32,9 +37,6 @@ ChatGPTの回答に「引用」をテキストに付加することで、より�
 
 本ワークショップで作成したAPIは、WebアプリだけでなくモバイルアプリケーションやPowerAppsなどのローコードアプリケーションからも利用できます。
 
-<!-- ![](images/powerapps.png)
-参考: PowerAppsでの例 -->
-
 
 ## 🔧事前準備
 
@@ -43,7 +45,8 @@ ChatGPTの回答に「引用」をテキストに付加することで、より�
 * [Dockerのインストール](https://www.docker.com/get-started)
 * [GitHubアカウントの作成](https://github.co.jp/)
 
-!> このワークショップを実行するには、 **Azure OpenAI Service へのアクセスを有効にした** Azure サブスクリプションが必要です。アクセスは[こちら](https://aka.ms/oaiapply)からリクエストできます。
+!> このワークショップを実行するには、 **Azure OpenAI Service へのアクセスを有効にした** Azure サブスクリプションが必要です。アクセスは[こちら](https://aka.ms/oaiapply)からリクエストできます。またワークショップで使用するAzureアカウントには、アクセス管理者や所有者(`Microsoft.Authorization/roleAssignments/write`)のアクセス権限が必要です。
+
 
 本ワークショップの受講者は、基本的なAzureの知識とAzure ポータルでの操作経験を前提としています。またGitHubの操作経験と基本的なプログラミング知識が必要となります。
 
@@ -54,8 +57,10 @@ ChatGPTの回答に「引用」をテキストに付加することで、より�
 
 ![](images/workshop-overview.png)
 
-ワークショップでは、ダミー論文をデータセットとして利用します。実際の業務データを使いたい場合は、データを用意してください。
+ワークショップでは、ダミー論文をサンプルデータとして利用します。実際の業務データを使いたい場合は、各自データを用意してください。ただし、インターネットに公開しても問題のないデータを使用してください。
 
+
+?> このワークショップで使用されているPDF文書には、Azure OpenAI Serviceを使用して生成された情報が含まれています。これらのドキュメントに含まれる情報は、デモを目的としたものであり、マイクロソフトの意見や信条を反映したものではありません。マイクロソフトは、明示または黙示を問わず、このドキュメントに含まれる情報の完全性、正確性、信頼性、適合性、可用性について、いかなる種類の表明または保証も行いません。すべての権利はマイクロソフトに帰属します。
 
 
 #### このパートのゴール
@@ -97,11 +102,7 @@ git clone https://github.com/<Your_GitHub_Name>/azure-search-openai-demo
 
 ![](images/vscode-devcontainer4.png)
 
-数分するとインストールが完了します。
-
-![](images/vscode-devcontainer5.png)
-
-すると[`>< Dev Container: Azure Developer CLI`]となり、次のようなターミナル(コマンドを実行する箇所)が表示されます。これは、開発に必要な環境一式がDockerコンテナとして起動できるVisual Studio CodeのDevContainersという機能を使っています。もしエラー等で起動できない場合は、Visual Studio Codeを再起動しローカルPCでDockerコンテナが動作しているかを確認してください。
+数分するとインストールが完了します。完了すると[`>< Dev Container: Azure Developer CLI`]となり、次のようなターミナル(コマンドを実行する箇所)が表示されます。これは、開発に必要な環境一式がDockerコンテナとして起動できるVisual Studio CodeのDevContainersという機能を使っています。もしエラー等で起動できない場合は、Visual Studio Codeを再起動しローカルPCでDockerコンテナが動作しているかを確認してください。
 
 ![](images/vscode-devcontainer3.png)
 
@@ -121,11 +122,8 @@ Visual Studio CodeのRemote-Containers 拡張機能を使用すると、開発�
 ### 2. Azure環境の作成
 本ワークショップではAzureの環境作成とサンプルアプリのデプロイにAzure Developer CLIを利用します。
 
-Azure Developer CLI(azdコマンド)は、Azureのリソースを管理するためのオープンソースのコマンドラインツールです。Azure Developer CLIを使用することで、Azure上のリソースの作成、更新、削除などを行うことができます。またAzure Developer CLIは、Azureのリソースを管理するためのスクリプトを作成する際にも役立ちます。Azure Developer CLIを使用することで、Azure上のリソースをプログラムから操作することができ、IaCによる自動デプロイや管理ができます。また、テンプレートが用意されているのでこれをもとに環境を素早く作成できます。このテンプレートは自作することも可能で、プロジェクトの要件にあわせたものを作成して開発チームで展開することができます。
+Azure Developer CLI(azdコマンド)は、Azureのリソースを管理するためのオープンソースのコマンドラインツールです。Azure Developer CLIを使用することで、Azure上のリソースの作成、更新、削除などを行うことができます。またAzure Developer CLIは、Azureのリソースを管理するためのスクリプトを作成する際にも役立ちます。Azure Developer CLIを使用することで、Azure上のリソースをプログラムから操作することができ、IaCによる自動デプロイや管理ができます。また、テンプレートが用意されているのでこれをもとに環境を素早く作成できます。このテンプレートは自作することも可能で、プロジェクトの要件にあわせたものを作成して開発チームで展開できます。
 
-
-
-![](images/infra1.png)
 
 ターミナルに次のコマンドを入力してAzureにログインします。そしてAzure OpenAIが利用可能なAzureサブスクリプションを設定します。
 
@@ -137,11 +135,15 @@ azd auth login
 azd config set defaults.subscription aaaaaaaa-bbbb-cccc-dddddddddddd
 ```
 
+
+![](images/infra1.png)
+
+
 !>必ずAzure OpenAIが利用可能なサブスクリプションを指定してください。
 
 本ワークショップで使用するAzure環境はAzure Developer CLIで構築します。Visual Studio Codeのターミナルで次のコマンドを実行します。
 
-まず [`azd init`](https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/reference#azd-init)コマンドで環境の設定を行います。
+はじめに [`azd init`](https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/reference#azd-init)コマンドで環境の設定を行います。
 
 ```bash
 azd init
@@ -155,7 +157,10 @@ Enter a new environment name: [? for help] (azure-search-openai-demo-csharp-dev)
 
 ![](images/azd-init.png)
 
+このコマンドを実行すると「`.azure`」ディレクトリが作成され、環境構築に必要な設定ファイルが格納されます。
+
 ![](images/azd-init2.png)
+
 
 
 次に[`azd up`](https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/reference#azd-up)コマンドを実行し、Azure リソースをプロビジョニングして、サンプルアプリをデプロイします。
@@ -164,21 +169,31 @@ Enter a new environment name: [? for help] (azure-search-openai-demo-csharp-dev)
 azd up
 ```
 
-コマンドを実行すると、Azureのサブスクリプションが聞かれるので、Azure OpenAIが利用可能なサブスクリプションを選びます。
+コマンドを実行すると、Azureのサブスクリプションを聞かれるので、Azure OpenAIが利用可能なサブスクリプションを選びます。
 
 ```bash
 ? Select an Azure Subscription to use:  [Use arrows to move, type to filter]
 ```
 
-次にデプロイするAzureリージョンを聞かれれるので、Azure OpenAIが利用可能なリージョンを選びます。
 
 コマンドを実行すると次の値を聞かれるので、自身の環境にあわせて入力します。
 
 |      項目       |                                                                                                        設定内容                                                                                                         |                設定例                |
 | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
-| location        | Azure OpenAI Serviceの「`gpt-35-turbo`」「`text-embedding-ada-002`」モデルが利用可能な[リージョン](https://learn.microsoft.com/ja-jp/azure/cognitive-services/openai/concepts/models#model-summary-table-and-region-availability)を指定します。 | eastus                               |
+| location        | Azure OpenAI Serviceの「`gpt-35-turbo (0613)`」「`text-embedding-ada-002(Version 2)`」モデルが利用可能な[リージョン](https://learn.microsoft.com/ja-jp/azure/cognitive-services/openai/concepts/models#model-summary-table-and-region-availability)を指定します。<b><span style="color: red">※ リージョンを間違えるとエラーになりますので注意してください</span></b> | japaneast                               |
 | publisherEmail  | API Managamentの管理者のメールアドレス                                                                                                                                                                                  | hoge@fuga.com                        |
 | publisherName   | API Managamentの管理者の名前                                                                                                                                                                                            | hoge                                 |
+
+
+![](images/azd-up-config1.png)
+
+Azureのデプロイが終わると、データ登録のためのスクリプト「`prepdocs.py`」が実行されます。
+
+![](images/azd-up-config7.png)
+
+すべての環境構築が完了すると、次の画面になります。
+
+![](images/azd-up-config8.png)
 
 
 
@@ -208,32 +223,41 @@ Azure Developer CLIでは、ワークフローとデプロイをカスタマイ�
 
 Azure Developer CLIでは、ワークフローとデプロイをカスタマイズするためのさまざまな拡張ポイントがサポートされています。フックを使用すると、コマンドと azd サービス ライフサイクル イベントの前後にカスタム スクリプトを実行できます。
 
-たとえば今回のサンプルの場合、`azure.yaml`をみると`postprovision`フックが設定されているため、BicepによってAzureリソースが作成し終わったあとに、`./scripts/prepdocs.ps1`または`./scripts/prepdocs.sh`が実行されます。この`prepdocs.ps1/prepdocs.sh`は`/data`配下のPDFデータから文字情報を抽出しAzure Blob Storageにチャンク分割したファイルを格納してAzure Cognitive Searchにインデックスを登録しています。詳細については、Part3を確認してください。
+たとえば今回のサンプルの場合、`azure.yaml`をみると`postprovision`フックが設定されているため、BicepによってAzureリソースが作成し終わったあとに、`./scripts/prepdocs.ps1`または`./scripts/prepdocs.sh`が実行されます。この`prepdocs.ps1/prepdocs.sh`は`/data`配下のPDFデータから文字情報を抽出しAzure Blob Storageにチャンク分割したファイルを格納してAzure Cognitive Searchにインデックスを登録しています。
 
 ```yaml
-name: azure-search-openai-demo-csharp
+name: azure-search-openai-demo
 metadata:
-  template: azure-search-openai-demo-csharp@0.0.3-beta
+  template: azure-search-openai-demo@0.0.2-beta
 services:
-  web:
-    project: ./app/backend/
-    host: containerapp
-    language: dotnet
-    docker:
-      path: ../Dockerfile
-      context: ../
+  backend:
+    project: ./app/backend
+    language: py
+    host: appservice
+    hooks:
+      prepackage:
+        windows:
+          shell: pwsh
+          run:  cd ../frontend;npm install;npm run build
+          interactive: true
+          continueOnError: false
+        posix:
+          shell: sh
+          run:  cd ../frontend;npm install;npm run build
+          interactive: true
+          continueOnError: false
 hooks:
-  postprovision:
-    windows:
-      shell: pwsh
-      run: ./scripts/prepdocs.ps1
-      interactive: true
-      continueOnError: false
-    posix:
-      shell: sh
-      run: ./scripts/prepdocs.sh
-      interactive: true
-      continueOnError: false
+    postprovision:
+      windows:
+        shell: pwsh
+        run: ./scripts/prepdocs.ps1
+        interactive: true
+        continueOnError: false
+      posix:
+        shell: sh
+        run: ./scripts/prepdocs.sh
+        interactive: true
+        continueOnError: false
 ```
 
 
@@ -255,7 +279,7 @@ hooks:
 
 ![](images/bicep.png)
 
-Azure環境の作成は40分程度かかります。
+なお、Azure環境の作成は40分程度かかります。
 
 
 ## 📝講義
@@ -268,9 +292,14 @@ Azureを利用するにあたり、セキュリティの設定は欠かせませ
 
 
 # **Part2: 業務データを利用したデータセットの作成** 
-このパートでは、PDFなどの業務データをもとにデータセットを作成します。
+このパートでは、PDFなどの業務データからテキスト文字を抽出しデータセットを作成します。
+
+?>ワークショップに必要なサンプルデータはあらかじめ`data`ディレクトリにあり、Part1の手順で既にデータセットの作成が完了しています。そのためこのパートは飛ばして、Part3に進んでもかまいません。
+
 
 ![](images/part2-overview.png)
+
+
 
 #### このパートのゴール
 * Azure Form Recognizer を使ってドキュメントから文字データの抽出ができる
@@ -278,7 +307,7 @@ Azureを利用するにあたり、セキュリティの設定は欠かせませ
 ## 💻ハンズオン
 
 ### 1. データセットのテキスト化
-?>ワークショップに必要なデータはあらかじめ`data`ディレクトリに準備されています。そのためこの手順は飛ばして、Part2に進んでもかまいません。またお手持ちのデータをもとに検索を行いたい場合は、データを差し替えてください。
+
 
 Azure Form Recognizerは、Microsoft Azureのサービスの一つであり、OCR(Optical Character Recognition)と機械学習を利用してテキストを自動的に抽出し、構造化されたデータに変換するためのサービスです。
 
@@ -288,7 +317,7 @@ Form Recognizerを使用することで、大量の紙文書や手書きのデ�
 
 Azure Form Recognizerは、APIとして提供されており、開発者は独自のアプリケーションやサービスに組み込むことができます。また、Azureポータルから使用することもできます。
 
-Azureポータルを開き、「 **Form Recognizer** 」を選びます。
+Azureポータルを開き、Part1で作成したリソースグループ「**aoai-workshop**」にある「 **Form Recognizer** 」を選びます。
 
 ![](images/form1.png)
 
@@ -320,8 +349,6 @@ Form Recognizer Studioの [ **Browser for a file** ] をクリックして、ダ
 
 ![](images/form15.png)
 
-これらのテキスト情報から検索システムを作成します。なお、本ワークショップでは、あらかじめPDFから抽出したテキスト情報を`data` ディレクトリに格納しています。
-
 
 
 ## 📖演習
@@ -336,7 +363,8 @@ Form Recognizerを使って、身近なドキュメントの読み取りを試�
 
 
 # **Part3: 業務データの検索システム構築** 
-このパートではまず作成したテキストデータをもとに検索システムを作ります。次に、Azure OpenAI Serviceを使ってChatGPTで検索クエリーを作成し検索結果をもとに応答を返すREST APIを作成します。
+このパートではサンプルデータではなく、独自データをもとに検索システムを作ります。次に、Azure OpenAI Serviceを使ってChatGPTで検索クエリーを作成し検索結果をもとに応答を返すREST APIを作成します。
+
 
 ![](images/part3-overview.png)
 
@@ -349,20 +377,21 @@ Form Recognizerを使って、身近なドキュメントの読み取りを試�
 
 ### 1. Azure Cognitive SearchのIndex作成
 
-Azureの環境が構築できたら、作成したデータセットをAzure Blob Storageに格納し、Azure Cognitive Searchにインデックスを登録します。
 
-まず、サンプルコードの`data`配下には、「sample-data.pdf」というダミーデータが用意されています。これをいったん削除し、かわりに検索したい任意のPDFファイルを格納します。
+Part1を実行すると、サンプルコードの`data`配下にある、「`sample-data.pdf`」というダミーデータをつかった検索システムが作成されます。
 
-ここでは、インターネットに公開されてもよいデータを利用してください。
+ここで、自社製品のマニュアル・研究論文・社内ドキュメントなどの実際の業務データを使うには、「`data/sample-data.pdf`」をいったん削除し、かわりに検索したい任意のPDFファイルを「`data/`」に格納します。
+
+!>本ワークショップのサンプルはユーザ認証やネットワーク閉域化されていないため、インターネットに公開されても問題のないデータを利用してください。
 
 
-VS Codeのターミナルから次のコマンドを実行してインデックスの作成を行います。
+Visual Studio Codeのターミナルから次のコマンドを実行してデータの登録と文字抽出、Cognitive SearchのIndex作成を行います。
 
 ```bash
 $ scripts/prepdocs.sh
 ```
 
-Azure Portalを開き、リソースグループ内のストレージアカウントをクリックします。
+スクリプトが実行しおわったら、Azure Portalを開き、リソースグループ内のストレージアカウントをクリックします。
 
 ![](images/search1.png)
 
@@ -391,20 +420,19 @@ Azure Portalを開き、リソースグループ内のストレージアカウ�
 ![](images/search6.png)
 
 
-### 3. バックエンドアプリのデプロイ
+### 3. サンプルアプリのデプロイ
 
 これで準備が出来上がったので検索データとAzure OpenAI Serviceを組み合わせた自然言語による応答を返すAPIを作成します。
 
-サンプルのバックエンドアプリは次のフォルダにあります。
-```bash
-cd ../app/backend
-```
+サンプルのバックエンドアプリは「`app/backend`」、フロントエンドアプリは「`app/frontend`」ディレクトリにあります。
 
-バックエンドアプリのコードを参照して、プロンプトを修正します。
+
+バックエンドアプリのコードを参照して、作成したデータに合うようプロンプトを修正します。コードの修正ポイントについては講師に確認してください。
+
 
 バックエンドアプリはAzure AppServiceの[Web Apps](https://azure.microsoft.com/ja-jp/products/app-service/web)にデプロイします。
 
-?> Azure AppServiceのWeb Appsは、Azure上でWebアプリをホストするためのプラットフォームです。簡単に作成/デプロイ/スケーリングができ、さまざまなプログラミング言語やフレームワークに対応しています。高可用性とスケーラビリティを提供し、継続的なデプロイと統合もサポートしています。また認証やSSL証明書の統合などが出来るのが特徴です。
+?> Azure AppServiceの[Web Apps](https://azure.microsoft.com/ja-jp/products/app-service/web)は、Azure上でWebアプリをホストするためのプラットフォームです。簡単に作成/デプロイ/スケーリングができ、さまざまなプログラミング言語やフレームワークに対応しています。高可用性とスケーラビリティを提供し、継続的なデプロイと統合もサポートしています。また認証やSSL証明書の統合などが出来るのが特徴です。
 
 Visual Studio Codeのターミナルを開いて次のコマンドを実行します
 
@@ -436,20 +464,39 @@ app-backend-xxx.azurewebsites.net
 ![](images/backend4.png)
 
 
-このサンプルのAPIの仕様はSwagger UIで確認できます。ブラウザで以下のURLにアクセスします。
+このサンプルのAPIの仕様はSwaggerで確認できます。Visual Studio Codeで`app/backend/swagger.json`を開きます。
 
-```bash
-https://app-backend-xxx.azurewebsites.net/docs/
+![](images/swagger1.png)
+
+次に、[`servers`]-[`url`]の値をデプロイしたAppServiceのエンドポイントに変更してファイルを上書き保存します。たとえばエンドポイントが「https://app-backend-xxx.azurewebsites.net」の場合は次のようになります。
+
+
+```json
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Azure OpenAI Sample API",
+    "description": "API to interact with chat and question-answering approaches.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://app-backend-xxx.azurewebsites.net"
+    }
+  ],
 ```
 
-![](images/backend5.png)
 
-たとえば、APIエンドポイントの`/ask`にリクエストを送るときのペイロードやStatus Codeが200(成功)の場合のレスポンスのデータを確認できます。
+ここで、Visual Studio Codeの[`view`]-[`Command Palette`]を選択し、「`Preview Swagger`」を選びます。
 
-このAPIをつかってアプリケーションを実装するときはswagger.jsonを利用できます。
-```
-https://app-backend-xxx.azurewebsites.net/swagger.json
-```
+![](images/swagger2.png)
+
+
+すると、Swagger Viewerが立ち上がり、APIの仕様を確認できます。たとえば、APIエンドポイントの`/ask`にリクエストを送るときのペイロードやStatus Codeが200(成功)の場合のレスポンスのデータを確認できます。
+
+![](images/swagger3.png)
+
+
 
 ?> Swaggerは、RESTful Webサービスを記述、設計、構築、ドキュメント化するためのオープンソースのフレームワークです。Swaggerは、APIの仕様書を自動的に生成することができ、APIのエンドポイント、パラメータ、レスポンス、リクエストの形式、エラーコード、セキュリティ要件などを記述できます。Swaggerは、APIの設計とドキュメンテーションの作業を簡素化するだけでなく、開発者間の意思疎通を向上させるのに役立ちます。Swaggerは、JSONまたはYAML形式でAPIの仕様書を記述し、Swagger UIを使用して、WebブラウザでAPIの仕様書を見ることができます。
 
@@ -458,18 +505,15 @@ https://app-backend-xxx.azurewebsites.net/swagger.json
 ## 📖演習
 今回のサンプルアプリのソースコードを確認しながら、チームでディスカッションして発表しましょう。
 
-- Azure OpenAI Serviceは現在どのようなモデルが使えるのかを調べてみましょう。また、「責任あるAI」について業務データを利用するうえで考慮すべき点やセキュリティの原則を調べてみましょう。
-
-- 検索クエリの作成でチャット履歴と最後の質問をもとに、GPT-3 Completion を利用して最適化されたキーワード検索クエリを生成しています。`chatreadretrieveread.py`のコードを書き換えて、振る舞いがどのように変わるかをみてみましょう。
+- Azure OpenAI は現在どのようなモデルが使えるのかを調べてみましょう。また、「責任あるAI」について業務データを利用するうえで考慮すべき点やセキュリティの原則を調べてみましょう。
 
 [『ChatGPTによって描かれる未来とAI開発の変遷』日本マイクロソフト株式会社 蒲生 弘郷氏](https://www.youtube.com/watch?v=l9fpxtz22JU) 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/l9fpxtz22JU" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe><br>
 
 
-
-- 検索インデックスから関連文書を取得する処理はどこで行われているかを確認しましょう。
-
 - このアプリはREST APIとして実装されています。`/ask`にリクエストを送信したときにどのような形式でデータが返るかを確認してください。また、`/chat`にリクエストをするときはどのようなデータをリクエストボディで送信する必要があるかを確認しましょう。
+
+- サンプルアプリのプロンプトを変更することで、APIの結果がどのように変わるかを観察してください。
 
 - AppService には組み込み認証認可の機能やGitHubとの連携機能など開発者に便利な機能が用意されています。ほかにもどのような機能があるか、どのような言語/ランタイムがサポートされているかを調べてみましょう。
 
@@ -486,12 +530,12 @@ https://app-backend-xxx.azurewebsites.net/swagger.json
 
 
 
-# **Part4: API統合管理基盤の作成(削除予定)** 
+# **Part4: API統合管理基盤の作成** 
 Azure Cognitive Search/Azure OpenAI Service/AppServiceを使って検索エンジンから自然言語で応答を返すAPIが作成できました。これをWebブラウザから利用できるシングルページアプリケーションやモバイルアプリケーション、ローコードツールで開発したアプリケーションなどから便利に利用できるよう、APIの統合管理を行います。
 
 Azure API Managementは、APIを統合管理するサービスでAPIプロキシ/管理ポータル/ポリシー管理/分析などの機能を提供します。
 
-Azure API Managementを使うと、クライアントアプリケーションとの間でリクエストとレスポンスを中継することで、トラフィック制御や認証/キャッシングなどができます。また、どのぐらいAPIが利用されているかなどの情報を分析できたり、「APIを呼び出せるのは1分間に10回まで」などのポリシーを適用して流量を制御できます。
+Azure API Managementを使うと、クライアントアプリケーションとの間でリクエストとレスポンスを中継することで、トラフィック制御や認証/キャッシング/リトライ処理などができます。また、ログを収集することでどのぐらいAPIが利用されているかなどの情報を分析できたり、「APIを呼び出せるのは1分間に10回まで」などのポリシーを適用して流量を制御できます。
 
 ![](images/part4-overview.png)
 
@@ -503,7 +547,7 @@ Azure API Managementを使うと、クライアントアプリケーションと
 ### 1. API ManagementへのAPI登録
 
 それでは、API Managementに作成したAPIを登録します。
-Azureポータルを開き、「`openai-workshop`」リソースグループ内のAPI Managementサービスを選びます。
+Azureポータルを開き、「`aoai-workshop`」リソースグループ内のAPI Managementサービスを選びます。
 ![](images/apim1.png)
 
 [ **API** ] - [ **+ Add API** ]をクリックします。
@@ -514,32 +558,26 @@ API Managementで管理したいAPIを登録します。今回は[`OpenAPI`]を�
 
 ![](images/apim3.png)
 
-次に、[ **Create from OpenAPI specification** ]ダイアログが表示されるので、「 **OpenAPI specification** 」に以下の`swagger.json`ファイルを指定します。「 **API URL suffix** 」には「`api`」を指定します。
-
-```bash
-https://app-backend-<your_name>.azurewebsites.net/swagger.json
-```
-
-この値を忘れてしまった場合は、Azureポータルを開きAppServiceのエンドポイントを確認してください。
+次に、[ **Create from OpenAPI specification** ]ダイアログが表示されるので、「 **OpenAPI specification** 」に`data/backend/swagger.json`ファイルを指定します。「 **API URL suffix** 」には「`api`」を指定します。
 
 ![](images/apim4.png)
 
-これで登録が出来ましたので、APIを確認します。たとえば「`post_ask`」をクリックすると、クライアントアプリケーションから`/ask`にリクエストがきたときに「**Inboud processing** 」を通って「 **Backend** 」にリクエストが転送されるのがわかります。このBackendでは、APIをホストしたAppServiceのエンドポイントになっているのが確認できます。またBackendからのレスポンスは「**Outbound processing** 」を通って「**Frontend** 」に応答が返ります。
+これで登録が出来ましたので、APIを確認します。たとえば「`Ask a question to the application`」をクリックすると、クライアントアプリケーションから`/ask`にリクエストがきたときに「**Inboud processing** 」を通って「 **Backend** 」にリクエストが転送されるのがわかります。このBackendでは、APIをホストしたAppServiceのエンドポイントになっているのが確認できます。またBackendからのレスポンスは「**Outbound processing** 」を通って「**Frontend** 」に応答が返ります。
 
 ![](images/apim6.png)
 
-ヘッダの書き換えやJWT検証、IPアドレスによる制限や流量制御などのポリシーが必要な場合は、「Add Policy」をクリックして追加します。
+ヘッダの書き換えやJWT検証、IPアドレスによる制限や流量制御などのポリシーが必要な場合は、「**Add Policy**」をクリックして追加します。
 
 
 ### 2. APIの動作確認
 
 APIの登録ができたので、動作確認をします。
 
-まず、API Managementを経由した場合のエンドポイントを確認します。[概要]の[ゲートウェイのURL]をコピーします。
+まず、API Managementを経由した場合のエンドポイントを確認します。[**概要**]の[**ゲートウェイのURL**]をコピーします。
 
 ![](images/apim7.png)
 
-次に、Visual Studio Codeを開き、「REST.http」をクリックします。ここで、`@apimanagament`の値に、コピーしたゲートウェイのURLを貼り付けます。
+次に、Visual Studio Codeを開き、「`REST.http`」をクリックします。ここで、`@apimanagament`の値に、コピーしたゲートウェイのURLを貼り付けます。
 
 ![](images/apim8.png)
 
@@ -547,7 +585,7 @@ APIの登録ができたので、動作確認をします。
 
 ![](images/apim9.png)
 
-そこで、APIのアクセスキーをリクエストに設定します。まずAzureポータルを開き、「サブスクリプション」から「Built-in all-access subscription」を選び、「キーの表示/非表示」を選びます。これで表示されたキーをコピーします。
+そこで、APIのアクセスキーをリクエストに設定します。まずAzureポータルを開き、「 **サブスクリプション** 」から「 **Built-in all-access subscription** 」を選び、「 **キーの表示/非表示** 」を選びます。これで表示されたキーをコピーします。
 
 !>これはすべてのAPIにアクセスできる強力な権限をもつキーです。本番環境で利用するときは適切なスコープ/権限を持ったキーを生成して運用してください。
 
@@ -561,7 +599,7 @@ Visual Studio Codeに戻り、リクエストヘッダの`Ocp-Apim-Subscription-
 ![](images/apim10.png)
 
 
-これでAPIの管理ができました。クライアントアプリケーションからのリクエストとレスポンスを一元管理できるので、アクセス制御だけでなくポリシーの設定やロギングなどもまとめて管理できます。
+これでAPIの管理ができました。クライアントアプリケーションからのリクエストとレスポンスを一元管理できるので、アクセス制御だけでなくポリシーの設定やロギングなどもまとめて管理できます。なお、本番環境で運用するときはAPIキーによる認証ではなく、Azure AD認証 (RBAC)を強くお勧めします。 
 
 
 ## 📖演習
@@ -587,8 +625,18 @@ API Managementは高機能なAPI管理サービスです。次のような課題
 
 
 
+# 🗑Azureリソースの削除
+本ワークショップで使用したすべてのAzureリソースを削除するときは、Visual Studio Codeのターミナルで次のコマンドを実行して下さい。
 
-# **付録A: Logic App を使って Form Recognizer で PDF をテキスト化する** 
+```bash
+azd down
+```
+
+おつかれさまでした☕
+
+
+---
+# **参考: Logic App を使って Form Recognizer で PDF をテキスト化する** 
 Azure OpenAI と Cognitive Search を連携する場合、ドキュメントのテキスト化が必要な場合があります。Python 、REST API等で Form Recognizer と連携することで PDF や PNG 等のドキュメントをテキスト化することができます。
 また、Logic App を使うことでノーコードで実施することもできますので、手順を以下に記載します。
 
@@ -623,10 +671,3 @@ Azure BLOB ストレージへの認証は以下を選択可能です。
 
 ![](images/logicapp4.png)
 
-# 🗑Azureリソースの削除
-本ワークショップで使用したAzureリソースは **「openai-workshop」** にあります。演習が終わった方は忘れずにリソースグループを削除してください。
-
-![](images/rg_delete.png)
-
-
-おつかれさまでした☕
