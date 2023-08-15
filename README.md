@@ -1,7 +1,7 @@
 # 業務データを活用したAIチャット ワークショップ
 
 このリポジトリは業務データを活用したAIチャットシステムを構築するためのワークショップ資料です。
-[ChatGPT + Enterprise data with Azure OpenAI and Cognitive Search - 日本語カスタマイズ版 /@nohanaga](https://github.com/nohanaga/azure-search-openai-demo) をベースに作成しています。
+[ChatGPT + Enterprise data with Azure OpenAI and Cognitive Search](https://github.com/Azure-Samples/azure-search-openai-demo)および[ChatGPT + Enterprise data with Azure OpenAI and Cognitive Search - 日本語カスタマイズ版 /@nohanaga](https://github.com/nohanaga/azure-search-openai-demo) をベースに作成しています。
 
 ワークショップ資料は[こちら](https://asashiho.github.io/azure-search-openai-demo/)
 
@@ -21,8 +21,6 @@ ChatGPT(gpt-35-turbo)モデルでトレーニングされたデータに基づ�
 ChatGPTの回答に「引用」をテキストに付加することで信頼できる応答を生成します
 
 ![](docs/images/workshop-overview.png)
-![](docs/images/swa23.png)
-![](docs/images/swa26.png)
 
 ### 対象者
 このワークショップは、AI技術に興味のあるデータサイエンティスト、エンジニア、研究者、または企業内での情報アクセスやナレッジ共有の改善を目指す方々に適しています。
