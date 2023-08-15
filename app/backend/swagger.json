@@ -1,0 +1,325 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Azure OpenAI Sample API",
+    "description": "API to interact with chat and question-answering approaches.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://app-backend-xxx.azurewebsites.net"
+    }
+  ],
+  "paths": {
+    "/chat": {
+      "post": {
+        "summary": "Chat with the application",
+        "requestBody": {
+          "description": "Chat request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "approach": {
+                    "type": "string",
+                    "description": "Approach name"
+                  },
+                  "history": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Chat history"
+                  },
+                  "overrides": {
+                    "type": "object",
+                    "description": "Overrides"
+                  }
+                },
+                "required": [
+                  "approach",
+                  "history"
+                ],
+                "example": {
+                  "approach": "rrr",
+                  "history": [
+                    "User: Hi",
+                    "Bot: Hello"
+                  ],
+                  "overrides": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "answer": {
+                      "type": "string",
+                      "default": "",
+                      "title": "The answer Schema",
+                      "example": [
+                        "水素ハイブリッド電車は、水素燃料電池と電気モーターを組み合わせた車両です。"
+                      ]
+                    },
+                    "data_points": {
+                      "type": "array",
+                      "default": [],
+                      "title": "The data_points Schema",
+                      "items": {
+                        "type": "string",
+                        "default": "",
+                        "title": "A Schema",
+                        "example": [
+                          "sample-data-1.pdf: 水素ハイブリッド電車は⾧距離の移動需要に対応しやすくなります。"
+                        ]
+                      },
+                      "example": [
+                        [
+                          "sample-data-1.pdf: 水素ハイブリッド電車は⾧距離の移動需要に対応しやすくなります。"
+                        ]
+                      ]
+                    },
+                    "thoughts": {
+                      "type": "string",
+                      "default": "",
+                      "title": "The thoughts Schema",
+                      "example": [
+                        "水素ハイブリッド電車とは何ですか"
+                      ]
+                    }
+                  },
+                  "example": [
+                    {
+                      "answer": "水素ハイブリッド電車は、水素燃料電池と電気モーターを組み合わせた車両です。",
+                      "data_points": [
+                        "sample-data-1.pdf: 水素ハイブリッド電車は⾧距離の移動需要に対応しやすくなります。"
+                      ],
+                      "thoughts": "水素ハイブリッド電車とは何ですか"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error message"
+                    }
+                  }
+                },
+                "example": {
+                  "error": "unknown approach"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error message"
+                    }
+                  }
+                },
+                "example": {
+                  "error": "Unsupported Media Type"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error message"
+                    }
+                  }
+                },
+                "example": {
+                  "error": "An internal error occurred."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ask": {
+      "post": {
+        "summary": "Ask a question to the application",
+        "requestBody": {
+          "description": "Question request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "approach": {
+                    "type": "string",
+                    "description": "Approach name"
+                  },
+                  "question": {
+                    "type": "string",
+                    "description": "Question text"
+                  },
+                  "overrides": {
+                    "type": "object",
+                    "description": "Overrides"
+                  }
+                },
+                "required": [
+                  "approach",
+                  "question"
+                ],
+                "example": {
+                  "approach": "rtr",
+                  "question": "What is the capital of France?",
+                  "overrides": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "answer": {
+                      "type": "string",
+                      "default": "",
+                      "title": "The answer Schema",
+                      "example": [
+                        "水素ハイブリッド電車は、水素燃料電池と電気モーターを組み合わせた車両です。"
+                      ]
+                    },
+                    "data_points": {
+                      "type": "array",
+                      "default": [],
+                      "title": "The data_points Schema",
+                      "items": {
+                        "type": "string",
+                        "default": "",
+                        "title": "A Schema",
+                        "example": [
+                          "sample-data-1.pdf: 水素ハイブリッド電車は⾧距離の移動需要に対応しやすくなります。"
+                        ]
+                      },
+                      "example": [
+                        [
+                          "sample-data-1.pdf: 水素ハイブリッド電車は⾧距離の移動需要に対応しやすくなります。"
+                        ]
+                      ]
+                    },
+                    "thoughts": {
+                      "type": "string",
+                      "default": "",
+                      "title": "The thoughts Schema",
+                      "example": [
+                        "水素ハイブリッド電車とは何ですか"
+                      ]
+                    }
+                  },
+                  "example": [
+                    {
+                      "answer": "水素ハイブリッド電車は、水素燃料電池と電気モーターを組み合わせた車両です。",
+                      "data_points": [
+                        "sample-data-1.pdf: 水素ハイブリッド電車は⾧距離の移動需要に対応しやすくなります。"
+                      ],
+                      "thoughts": "水素ハイブリッド電車とは何ですか"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error message"
+                    }
+                  }
+                },
+                "example": {
+                  "error": "unknown approach"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error message"
+                    }
+                  }
+                },
+                "example": {
+                  "error": "Unsupported Media Type"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error message"
+                    }
+                  }
+                },
+                "example": {
+                  "error": "An internal error occurred."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
