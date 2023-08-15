@@ -3,7 +3,7 @@
 
 このワークショップでは、社内の業務データをもとに高い精度で回答を返すAIチャットを作成します。
 
-ワークショップを通して、Azure OpenAI Service/Azure Cognitive Search/Azure AppService/Azure API Management/Static Web AppsなどのAzureのPaaSを使用したAIチャットの実装や、それを業務システムに組み込むための基礎知識を学びます。
+ワークショップを通して、Azure OpenAI/Azure Cognitive Search/Azure AppService/Azure API ManagementなどのAzureのPaaSを使用したAIチャットの実装や、それを業務システムに組み込むための基礎知識を学びます。
 
 
 
