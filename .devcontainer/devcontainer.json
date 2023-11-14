@@ -28,6 +28,7 @@
 					]
 			}
 	},
+	"runArgs": ["--cap-add=NET_ADMIN", "--cap-add=NET_BIND_SERVICE"],
 	"forwardPorts": [
 			5000
 	]
